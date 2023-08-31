@@ -35,7 +35,7 @@ U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);
 Servo touch_screen_servo;
 Servo button_a_servo;
 
-int reset_counter = 735;  // simple index used to increment and display the number of Soft Resets
+int reset_counter = 0;    // simple index used to increment and display the number of Soft Resets
 bool shiny_found = false; // a flag eventually indicating that shiny Celebi (used to start / pause the program)
 
 // Display functions
