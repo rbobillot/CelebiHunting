@@ -6,6 +6,9 @@ import time
 
 import serial
 
+# Initialize the webcam and set the resolution to 640x480
+# because on Linux, webcam stream is not working well with 1280x720 (low framerate)
+# I selected index 2, my 720p webcam
 cap = cv2.VideoCapture(2)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
@@ -41,7 +44,14 @@ while True:
     roi = frame[y1:y2, x1:x2]
     average_color = np.average(np.average(roi, axis=0), axis=0)
 
-    # Check if the average color is greenish, pinkish, or else, for at least 1 second
+    """
+      I've tried to match a grey scaled Celebi picture,
+      rather that checking the average color of the 100x100 area.
+      But it didn't work well, the Celebi was not detected (because of the webcam maybe ?),
+      so I've decided to check the average color.
+    """
+
+    # Check if the average color is greenish, pinkish, or else, for at least 1 second (2 seconds if pinkish)
     if average_color[1] > average_color[2] + 10:
         if color_detected != "greenish":
             greenish_start_time = time.time()

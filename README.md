@@ -21,3 +21,16 @@ is my only 2DS/3DS, and I didn't want to make a mess (not sure if the buttons wa
 Therefore, I came up with the idea of using two Servos to push the buttons / touch screen,
 and a webcam detecting the Celebi color (using Python + OpenCV).
 ```
+---
+
+Video Preview:
+=
+
+[![Preview](./misc/video-preview.png)](https://youtu.be/XSQ7xHX5vxI)
+---
+
+Arduino circuit schemas:
+=
+
+[!breadboard](./misc/breadboard-pic.png)
+[!schematic](./misc/schematic-pic.png)
