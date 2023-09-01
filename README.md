@@ -32,5 +32,5 @@ Video Preview:
 Arduino circuit schemas:
 =
 
-[!breadboard](./misc/breadboard-pic.png)
-[!schematic](./misc/schematic-pic.png)
+![breadboard](./misc/breadboard-pic.png)
+![schematic](./misc/schematic-pic.png)
