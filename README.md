@@ -22,15 +22,14 @@ Therefore, I came up with the idea of using two Servos to push the buttons / tou
 and a webcam detecting the Celebi color (using Python + OpenCV).
 ```
 ---
-
 Video Preview:
 =
-
 [![Preview](./misc/video-preview.png)](https://youtu.be/XSQ7xHX5vxI)
 ---
-
-Arduino circuit schemas:
+Arduino breadboard schema:
 =
-
 ![breadboard](./misc/breadboard-pic.png)
-![schematic](./misc/schematic-pic.png)
+---
+Workflow diagram
+=
+![diagram](./misc/diagram.png)

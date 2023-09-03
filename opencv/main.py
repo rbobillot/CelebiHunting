@@ -86,10 +86,8 @@ while True:
         if len(arduino) > 0:
             try:
                 ser = serial.Serial(port="/dev/" + arduino[0], write_timeout=0.1)
-                print(payload.capitalize() + " Celebi detected")
                 ser.write(payload.encode())
-                time.sleep(0.1)
-                ser.flush()
+                print(payload.capitalize() + " Celebi detected (notified Arduino)")
                 if ("SHINY" == payload):
                     loop_play('bell.wav')
             except Exception as err:
@@ -133,6 +131,7 @@ while True:
         line = ""
         try:
             line = ser.readline().decode('utf-8').rstrip() # until Arduino sends something, each readline will be empty
+            ser.flush()
             if line == "DETECT":
                 # print("Arduino asked for Celebi detection")
                 detected.should_detect = True

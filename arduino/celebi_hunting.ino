@@ -162,10 +162,8 @@ const char *check_if_shiny() {
   String readString;
 
   Serial.println("DETECT"); // asks for Python program, to try to detect Celebi
-  delay(50);                // wait for Python program to detect Celebi, before flushing Serial
-  Serial.flush();           // flush the Serial so the Python program reads "DETECT" only once
 
-  delay(500); // wait for Python program to detect Celebi
+  delay(1000); // wait for Python program to detect Celebi
 
   while (!Serial.available()); // wait for Serial to get a message
 
