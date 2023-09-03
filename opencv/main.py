@@ -6,7 +6,6 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide" # hide pygame welcome message
 from PIL import Image
 from pygame import mixer
 import serial
-import time
 
 @dataclasses.dataclass
 class Detected:
@@ -87,7 +86,7 @@ while True:
             try:
                 ser = serial.Serial(port="/dev/" + arduino[0], write_timeout=0.1)
                 ser.write(payload.encode())
-                print(payload.capitalize() + " Celebi detected (notified Arduino)")
+                print("\033[92m" + payload.capitalize() + " Celebi detected (notified Arduino)\033[0m")
                 if ("SHINY" == payload):
                     loop_play('bell.wav')
             except Exception as err:
@@ -127,13 +126,13 @@ while True:
     # Wait for Arduino to ask for Celebi detection (via serial)
     arduino = [arduino for arduino in os.listdir("/dev/") if arduino.startswith("ttyACM")]
     if len(arduino) > 0:
-        ser = serial.Serial(port="/dev/" + arduino[0], timeout=0.1) # tries to read every 0.1s from Serial
+        ser = serial.Serial(port="/dev/" + arduino[0], timeout=0.2) # tries to read every 0.1s from Serial
         line = ""
         try:
             line = ser.readline().decode('utf-8').rstrip() # until Arduino sends something, each readline will be empty
             ser.flush()
             if line == "DETECT":
-                # print("Arduino asked for Celebi detection")
+                print("Arduino asked for Celebi detection")
                 detected.should_detect = True
                 celebi_detected = detect_color_and_celebi_in_area()
         except Exception as err:

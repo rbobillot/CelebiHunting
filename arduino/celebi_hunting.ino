@@ -162,8 +162,7 @@ const char *check_if_shiny() {
   String readString;
 
   Serial.println("DETECT"); // asks for Python program, to try to detect Celebi
-
-  delay(1000); // wait for Python program to detect Celebi
+  delay(2000); // wait for Python program to detect Celebi
 
   while (!Serial.available()); // wait for Serial to get a message
 
@@ -207,7 +206,7 @@ void hunt_celebi() {
     click("button_a");
     show_status("Waiting for", "Celebi...");
 
-    delay(16000); // wait till the end of the Celebi animation
+    delay(17000); // wait till the end of the Celebi animation
 
     const char *shiny_status = check_if_shiny();
 
