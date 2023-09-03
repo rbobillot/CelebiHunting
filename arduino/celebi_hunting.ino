@@ -1,6 +1,6 @@
 /*
 
-  celebi_hunting.ino
+  ShinyCelebiPokemonCrystalVC.ino
 
   This program is meant to shiny hunt Celebi
   in Pokemon Crystal VC (3DS).
@@ -35,8 +35,9 @@ U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);
 Servo touch_screen_servo;
 Servo button_a_servo;
 
-int reset_counter = 0;    // simple index used to increment and display the number of Soft Resets
-bool shiny_found = false; // a flag eventually indicating that shiny Celebi (used to start / pause the program)
+int reset_counter = 3850;   // simple index used to increment and display the number of Soft Resets
+bool shiny_found = false;   // a flag eventually indicating that shiny Celebi (used to start / pause the program)
+bool error_occured = false; // a flag indicating that somthing went wrong (example: Arduino not found while Python tries to communicate)
 
 // Display functions
 void show_main_menu();
@@ -48,7 +49,7 @@ void click_loop(const char *button, const int times, const int interval /* milli
 void soft_reset();
 
 // Program logic
-const char *check_color();
+const char *check_if_shiny();
 void hunt_celebi();
 
 ////////////////////////////
@@ -67,6 +68,7 @@ void setup(void)
 
   // prepare communication between Arduino and Python program
   Serial.begin(9600);
+  Serial.setTimeout(1);
 }
 
 void loop(void)
@@ -82,7 +84,7 @@ void loop(void)
   button_a_servo.write(0);
   delay(300);
 
-  if (!shiny_found) {
+  if (!shiny_found && !error_occured) {
     show_main_menu();
     hunt_celebi();
   }
@@ -123,7 +125,7 @@ void click(const char *button) {
     rotation = 137;
   } else if ("button_a" == button) {
     servo = button_a_servo;
-    rotation = 106;
+    rotation = 112;
   } else {
     return ;
   }
@@ -150,21 +152,33 @@ void soft_reset() {
   ++reset_counter;
 }
 /*
-  That's where the Arduino, and the Python+OpenCV program do communicated,
-  throught Serial port 9600.
-  For now, this is not the best way (well, not the cleanest):
-  if the Python program detects a shiny, it writes it to the Serial port 9600,
-  if the Arduino read anything in it, it should logically be come from the Python program,
-  hence, this Arduino program considers that shiny Celebi has been found.
+  That's where the Arduino, and the Python+OpenCV program do communicate, through Serial.
+  - Arduino asks for Python program to look for Celebi
+  - If the Python program detects Celebi, it sends back a message, telling if the Celebi was shiny or not
+  - Arduino waits for the Python program message
+  - if Arduino reads no message, it does nothing (avoiding an unwanted soft reset)
 */
-const char *check_color() {
-  if (Serial.available() > 0) {
-    char data = Serial.read();
+const char *check_if_shiny() {
+  String readString;
 
-    return data ? "SHINY" : "NORMAL";
-  }
+  Serial.println("DETECT"); // asks for Python program, to try to detect Celebi
+  delay(50);                // wait for Python program to detect Celebi, before flushing Serial
+  Serial.flush();           // flush the Serial so the Python program reads "DETECT" only once
 
-  return "NORMAL";
+  delay(500); // wait for Python program to detect Celebi
+
+  while (!Serial.available()); // wait for Serial to get a message
+
+  String str = Serial.readString();
+
+  Serial.flush();
+
+  if (str.startsWith("NORMAL"))
+    return "NORMAL";
+  else if (str.startsWith("SHINY"))
+    return "SHINY";
+  else
+    return "ERROR";
 }
 
 /*
@@ -184,23 +198,28 @@ void hunt_celebi() {
     soft_reset();
 
     show_status("Game start...", "");
-    delay(6000); // game launch
+    delay(5000);
     
     show_status("Skipping", "game intro...");
-    click_loop("button_a", 4, 1600);
+    click_loop("button_a", 4, 800);
 
     show_status("Celebi event...", "");
-    click_loop("button_a", 2, 1500);
-    click_loop("button_a", 6, 1000);
+    click_loop("button_a", 8, 700);
 
     click("button_a");
     show_status("Waiting for", "Celebi...");
-    delay(18000);
 
-    if ("SHINY" == check_color()) {
+    delay(16000); // wait till the end of the Celebi animation
+
+    const char *shiny_status = check_if_shiny();
+
+    if ("SHINY" == shiny_status) {
       show_status("SHINY FOUND !!!", "");
       shiny_found = true;
-
+      return ;
+    } else if ("ERROR" == shiny_status) {
+      show_status("ERROR", "");
+      error_occured = true; // will cause the program to pause
       return ;
     }
 
