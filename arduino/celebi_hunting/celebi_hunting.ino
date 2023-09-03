@@ -35,7 +35,7 @@ U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);
 Servo touch_screen_servo;
 Servo button_a_servo;
 
-int reset_counter = 3850;   // simple index used to increment and display the number of Soft Resets
+int reset_counter = 3900;   // simple index used to increment and display the number of Soft Resets
 bool shiny_found = false;   // a flag eventually indicating that shiny Celebi (used to start / pause the program)
 bool error_occured = false; // a flag indicating that somthing went wrong (example: Arduino not found while Python tries to communicate)
 
@@ -74,6 +74,7 @@ void setup(void)
 void loop(void)
 {
   u8x8.setFont(u8x8_font_chroma48medium8_r);
+  Serial.flush();
 
   /*
     First needed to init the Servos
@@ -162,13 +163,12 @@ const char *check_if_shiny() {
   String readString;
 
   Serial.println("DETECT"); // asks for Python program, to try to detect Celebi
-  delay(2000); // wait for Python program to detect Celebi
+  show_status("Analyze", "3DS screen...");
+  delay(1000); // wait for Python program to detect Celebi
 
   while (!Serial.available()); // wait for Serial to get a message
 
   String str = Serial.readString();
-
-  Serial.flush();
 
   if (str.startsWith("NORMAL"))
     return "NORMAL";

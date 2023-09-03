@@ -6,6 +6,7 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide" # hide pygame welcome message
 from PIL import Image
 from pygame import mixer
 import serial
+import time
 
 @dataclasses.dataclass
 class Detected:
@@ -13,15 +14,18 @@ class Detected:
     celebi: bool = False
     current_color: str = None
 
+def get_file_path(filename):
+    return os.path.join(os.path.dirname(os.path.realpath(__file__)), filename)
+
 # pause program, and play a song forever
 def loop_play(audio_file):
     while True:
         mixer.init()
-        alert=mixer.Sound(audio_file)
+        alert=mixer.Sound(get_file_path(audio_file))
         alert.play()
 
-celebi = Image.open('celebi.png').convert('L')
-celebi_threshold = 0.7 # precision of the celebi image detection
+celebi = Image.open(get_file_path('celebi.png')).convert('L')
+celebi_threshold = 0.75 # precision of the celebi image detection
 
 # Initialize the webcam and set the resolution to 640x480
 # because on Linux, webcam stream is not working well with 1280x720 (low framerate)
@@ -97,17 +101,20 @@ while True:
             loop_play('error.wav')
 
     def check_for_celebi_in_area() -> bool:
+        time.sleep(0.2)
         roi_gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
         celebi_matches = cv2.matchTemplate(roi_gray, np.array(celebi), cv2.TM_CCOEFF_NORMED)
         return np.max(celebi_matches) >= celebi_threshold
 
-    def detect_color_and_celebi_in_area():
+    def detect_color_and_celebi_in_area(max_tries=5):
         # Check if the average color of the area is greenish or pinkish
         if average_color[1] > average_color[2] + 10:
             detected.current_color = "greenish"
         elif average_color[2] > average_color[1] + 10:
             detected.current_color = "pinkish"
         else:
+            if max_tries > 0:
+                detect_color_and_celebi_in_area(max_tries - 1)
             detected.current_color = "other"
         # Check if Celebi is detected in the area
         detected.celebi = check_for_celebi_in_area()
@@ -118,6 +125,8 @@ while True:
             elif detected.current_color == "pinkish":
                 notify_arduino("SHINY")
         else:
+            if max_tries > 0:
+                detect_color_and_celebi_in_area(max_tries - 1)
             print("No Celebi detected")
             loop_play('error.wav')
 
@@ -126,12 +135,11 @@ while True:
     # Wait for Arduino to ask for Celebi detection (via serial)
     arduino = [arduino for arduino in os.listdir("/dev/") if arduino.startswith("ttyACM")]
     if len(arduino) > 0:
-        ser = serial.Serial(port="/dev/" + arduino[0], timeout=0.2) # tries to read every 0.1s from Serial
+        ser = serial.Serial(port="/dev/" + arduino[0], timeout=0.3)
         line = ""
         try:
             line = ser.readline().decode('utf-8').rstrip() # until Arduino sends something, each readline will be empty
-            ser.flush()
-            if line == "DETECT":
+            if line.startswith("DETECT"):
                 print("Arduino asked for Celebi detection")
                 detected.should_detect = True
                 celebi_detected = detect_color_and_celebi_in_area()
