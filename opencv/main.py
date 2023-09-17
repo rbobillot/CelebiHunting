@@ -50,19 +50,16 @@ while True:
     # Convert the frame to HSV color space
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-    # Check if there is a contour within a 100x100 area at the center of the screen
-    lower_blue = np.array([100, 50, 50])
-    upper_blue = np.array([130, 255, 255])
-    mask = cv2.inRange(hsv, lower_blue, upper_blue)
-    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # Check average color within a 100x90 area at the center of the screen
     center_x = int(frame.shape[1] / 2)
     center_y = int(frame.shape[0] / 2)
     x1 = center_x - 50
-    y1 = center_y - 50
+    y1 = center_y - 40
     x2 = center_x + 50
-    y2 = center_y + 50
+    y2 = center_y + 45
     roi = frame[y1:y2, x1:x2]
     average_color = np.average(np.average(roi, axis=0), axis=0)
+    average_rgb = dict(zip(["b", "g", "r"], average_color))
 
     # Draw a 100x100 rectangle at the center of the screen
     # its color depends on the average color of the area
@@ -108,16 +105,20 @@ while True:
 
     def detect_color_and_celebi_in_area(max_tries=5):
         # Check if the average color of the area is greenish or pinkish
-        if average_color[1] > average_color[2] + 10:
+        if average_rgb["g"] > average_rgb["r"] + 10:
             detected.current_color = "greenish"
-        elif average_color[2] > average_color[1] + 10:
+            print("\033[92m", end="")
+        elif average_rgb["r"] > average_rgb["g"] + 10:
             detected.current_color = "pinkish"
+            print("\033[95m", end="")
         else:
             if max_tries > 0:
                 detect_color_and_celebi_in_area(max_tries - 1)
             detected.current_color = "other"
-        # Check if Celebi is detected in the area
+        print("Detected color: " + detected.current_color + ": " + str(average_rgb) + "\033[0m")
         detected.celebi = check_for_celebi_in_area()
+
+        # Check if Celebi is detected in the area
         draw_detection_area()
         if detected.celebi:
             if detected.current_color == "greenish":
@@ -135,7 +136,7 @@ while True:
     # Wait for Arduino to ask for Celebi detection (via serial)
     arduino = [arduino for arduino in os.listdir("/dev/") if arduino.startswith("ttyACM")]
     if len(arduino) > 0:
-        ser = serial.Serial(port="/dev/" + arduino[0], timeout=0.3)
+        ser = serial.Serial(port="/dev/" + arduino[0], timeout=0.5) # timeout should vary between 0.2 and 0.5s (it changes webcam framerate, as it seems to be blocking the main thread)
         line = ""
         try:
             line = ser.readline().decode('utf-8').rstrip() # until Arduino sends something, each readline will be empty

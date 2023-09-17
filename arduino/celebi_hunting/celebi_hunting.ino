@@ -35,7 +35,7 @@ U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);
 Servo touch_screen_servo;
 Servo button_a_servo;
 
-int reset_counter = 3900;   // simple index used to increment and display the number of Soft Resets
+int reset_counter = 0;      // simple index used to increment and display the number of Soft Resets
 bool shiny_found = false;   // a flag eventually indicating that shiny Celebi (used to start / pause the program)
 bool error_occured = false; // a flag indicating that somthing went wrong (example: Arduino not found while Python tries to communicate)
 
@@ -115,7 +115,8 @@ void show_status(const char *line_1, const char *line_2) {
 
   Each servo is placed beside a button: touch screen, or button 'A'
   As the button's top is above the touch 3DS shield, and touch screen's under,
-  the angle needed to click each one, will be different
+  the angle needed to click each one, will be different, and might be updated
+  as the Servos can get tired
 */
 void click(const char *button) {
   Servo servo;
@@ -123,10 +124,10 @@ void click(const char *button) {
 
   if ("touch_screen" == button) {
     servo = touch_screen_servo;
-    rotation = 137;
+    rotation = 136; // must manually set it (depending on how you installed the Servo)
   } else if ("button_a" == button) {
     servo = button_a_servo;
-    rotation = 112;
+    rotation = 119; // must manually set it (depending on how you installed the Servo)
   } else {
     return ;
   }
@@ -201,9 +202,8 @@ void hunt_celebi() {
     click_loop("button_a", 4, 800);
 
     show_status("Celebi event...", "");
-    click_loop("button_a", 8, 700);
+    click_loop("button_a", 9, 700);
 
-    click("button_a");
     show_status("Waiting for", "Celebi...");
 
     delay(17000); // wait till the end of the Celebi animation
