@@ -127,7 +127,7 @@ void click(const char *button) {
     rotation = 136; // must manually set it (depending on how you installed the Servo)
   } else if ("button_a" == button) {
     servo = button_a_servo;
-    rotation = 119; // must manually set it (depending on how you installed the Servo)
+    rotation = 120; // must manually set it (depending on how you installed the Servo)
   } else {
     return ;
   }
@@ -163,7 +163,7 @@ void soft_reset() {
 const char *check_if_shiny() {
   String readString;
 
-  Serial.println("DETECT"); // asks for Python program, to try to detect Celebi
+  Serial.println((String("DETECT ") + String(reset_counter)).c_str()); // asks for Python program, to try to detect Celebi
   show_status("Analyze", "3DS screen...");
   delay(1000); // wait for Python program to detect Celebi
 
@@ -171,11 +171,13 @@ const char *check_if_shiny() {
 
   String str = Serial.readString();
 
-  if (str.startsWith("NORMAL"))
+  if (str.startsWith("NORMAL")) {
+    reset_counter = str.substring(6, str.length()).toInt();
     return "NORMAL";
-  else if (str.startsWith("SHINY"))
+  } else if (str.startsWith("SHINY")) {
+    reset_counter = str.substring(5, str.length()).toInt();
     return "SHINY";
-  else
+  } else
     return "ERROR";
 }
 
