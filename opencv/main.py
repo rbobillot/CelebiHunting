@@ -186,12 +186,17 @@ while True:
                 notify_arduino("SHINY")
                 sr_counter_file.close()
                 send_message("Shiny Celebi Found !!!")
+            else:
+                notify_arduino("OTHER")
+                sr_counter_file.close()
+                logging.error("Celebi Found, but the color is invalid: " + str(average_rgb)  + ")")
+                send_message("Celebi Found, but the color is invalid: " + str(average_rgb)  + ")")
         else:
             if max_tries > 0:
                 detect_color_and_celebi_in_area(max_tries - 1)
-            logging.error("Pinkish, but no Celebi detected")
+            logging.error("No Celebi detected (current color: " + str(average_rgb)  + ")")
             sr_counter_file.close()
-            send_message("Pinkish, but no Celebi detected")
+            send_message("No Celebi detected (current color: " + str(average_rgb)  + ")")
             loop_play('error.wav')
 
     draw_detection_area()
