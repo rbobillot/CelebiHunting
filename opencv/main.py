@@ -77,7 +77,7 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 detected = Detected()
 
 logging.info("Starting Celebi detector...")
-sr_counter_file = open("sr.counter", "r+")
+sr_counter_file = open(get_file_path("sr.counter"), "r+")
 
 try:
     detected.sr_counter = int(sr_counter_file.readlines()[0])
