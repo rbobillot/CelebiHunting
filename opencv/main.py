@@ -96,6 +96,9 @@ while True:
         except Exception as e:
             loggin.error("Cannot write to sr.counter: " + e)
 
+    def show_color(bgr):
+        return "https://convertingcolors.com/rgb-color-%d_%d_%d.html" % (int(bgr['r']), int(bgr['g']), int(bgr['b']))
+
     # Reset the detection state for each frame
     detected.should_detect = False
     detected.celebi = False
@@ -166,15 +169,15 @@ while True:
         # Check if the average color of the area is greenish or pinkish
         if average_rgb["g"] > average_rgb["r"] + 10:
             detected.current_color = "greenish"
-            logging.info("\033[92mDetected color: " + detected.current_color + ": " + str(average_rgb) + "\033[0m")
+            logging.info("\033[92mDetected color: " + detected.current_color + ": " + show_color(average_rgb) + "\033[0m")
         elif average_rgb["r"] > average_rgb["g"] + 10:
             detected.current_color = "pinkish"
-            logging.info("\033[95mDetected color: " + detected.current_color + ": " + str(average_rgb) + "\033[0m")
+            logging.info("\033[95mDetected color: " + detected.current_color + ": " + show_color(average_rgb) + "\033[0m")
         else:
             if max_tries > 0:
                 detect_color_and_celebi_in_area(max_tries - 1)
             detected.current_color = "other"
-            logging.info("\033[93mDetected color: " + detected.current_color + ": " + str(average_rgb) + "\033[0m")
+            logging.info("\033[93mDetected color: " + detected.current_color + ": " + show_color(average_rgb) + "\033[0m")
         detected.celebi = check_for_celebi_in_area()
 
         # Check if Celebi is detected in the area
@@ -189,14 +192,14 @@ while True:
             else:
                 notify_arduino("OTHER")
                 sr_counter_file.close()
-                logging.error("Celebi Found, but the color is invalid: " + str(average_rgb)  + ")")
-                send_message("Celebi Found, but the color is invalid: " + str(average_rgb)  + ")")
+                logging.error("Celebi Found, but the color is invalid: " + show_color(average_rgb)  + ")")
+                send_message("Celebi Found, but the color is invalid: " + show_color(average_rgb)  + ")")
         else:
             if max_tries > 0:
                 detect_color_and_celebi_in_area(max_tries - 1)
-            logging.error("No Celebi detected (current color: " + str(average_rgb)  + ")")
+            logging.error("No Celebi detected (current color: " + show_color(average_rgb)  + ")")
             sr_counter_file.close()
-            send_message("No Celebi detected (current color: " + str(average_rgb)  + ")")
+            send_message("No Celebi detected (current color: " + show_color(average_rgb)  + ")")
             loop_play('error.wav')
 
     draw_detection_area()
@@ -204,7 +207,7 @@ while True:
     # Wait for Arduino to ask for Celebi detection (via serial)
     arduino = [arduino for arduino in os.listdir("/dev/") if arduino.startswith("ttyACM")]
     if len(arduino) > 0:
-        ser = serial.Serial(port="/dev/" + arduino[0], timeout=0.3) # timeout should vary between 0.2 and 0.5s (it changes webcam framerate, as it seems to be blocking the main thread)
+        ser = serial.Serial(port="/dev/" + arduino[0], timeout=0.4) # timeout should vary between 0.2 and 0.5s (it changes webcam framerate, as it seems to be blocking the main thread)
         line = ""
         try:
             line = ser.readline().decode('utf-8').rstrip() # until Arduino sends something, each readline will be empty
