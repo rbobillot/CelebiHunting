@@ -1,3 +1,5 @@
+import glob
+import curses
 import cv2
 import dataclasses
 import http.client
@@ -67,10 +69,48 @@ def send_message(msg: str):
 celebi = Image.open(get_file_path('celebi.png')).convert('L')
 celebi_threshold = 0.75 # precision of the celebi image detection
 
+# Rather than hardcoding VideoCapture index,
+# this function helps to pick and choose one of the available video inputs
+# N.B: This function mainly works on Linux
+# I may add support for Windows and MacOS later
+def choose_camera_index():
+
+    def get_available_cameras():
+        def get_cam_index_and_name(cam):
+            return (int(cam.split('video')[2].split('/')[0]), open(cam).read().strip())
+        def is_cam_opened(cam_index):
+            return cv2.VideoCapture(cam_index).isOpened()
+        detected_cameras = sorted(
+            [get_cam_index_and_name(cam) for cam in glob.glob('/sys/class/video4linux/video*/name')],
+            key=lambda info: info[0]) # sort by index
+        available_cameras = [cam for cam in detected_cameras if is_cam_opened(cam[0])]
+        return available_cameras
+    
+    available_cameras = get_available_cameras()
+
+    if len(available_cameras) == 0:
+        print("No camera detected")
+        exit()
+    elif len(available_cameras) == 1:
+        print("Using camera " + str(available_cameras[0][0]) + ": " + available_cameras[0][1])
+        return available_cameras[0][0]
+    else:
+        print("\n\033[96mMultiple cameras detected, please choose one\033[0m:")
+        for cam in available_cameras:
+            print(str(cam[0]) + ": " + cam[1])
+        while True:
+            try:
+                index = int(input("\033[96mCamera index\033[0m: "))
+                if index in [cam[0] for cam in available_cameras]:
+                    return index
+                else:
+                    print("Invalid camera index")
+            except Exception as e:
+                print("Invalid camera index")
+
 # Initialize the webcam and set the resolution to 640x480
 # because on Linux, webcam stream is not working well with 1280x720 (low framerate)
-# I selected index 2, my 720p webcam
-cap = cv2.VideoCapture(3)
+cap = cv2.VideoCapture(choose_camera_index())
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
@@ -207,7 +247,7 @@ while True:
     # Wait for Arduino to ask for Celebi detection (via serial)
     arduino = [arduino for arduino in os.listdir("/dev/") if arduino.startswith("ttyACM")]
     if len(arduino) > 0:
-        ser = serial.Serial(port="/dev/" + arduino[0], timeout=0.4) # timeout should vary between 0.2 and 0.5s (it changes webcam framerate, as it seems to be blocking the main thread)
+        ser = serial.Serial(port="/dev/" + arduino[0], timeout=0.3) # timeout should vary between 0.2 and 0.5s (it changes webcam framerate, as it seems to be blocking the main thread)
         line = ""
         try:
             line = ser.readline().decode('utf-8').rstrip() # until Arduino sends something, each readline will be empty

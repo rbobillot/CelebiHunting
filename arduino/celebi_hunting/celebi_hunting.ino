@@ -25,12 +25,14 @@
 
 #include <Arduino.h>
 #include <U8x8lib.h>
+#include <U8g2lib.h>
 #include <Servo.h>
 
 #ifdef U8X8_HAVE_HW_SPI
 #include <SPI.h>
 #endif
 U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);
+U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 
 Servo touch_screen_servo;
 Servo button_a_servo;
@@ -40,6 +42,7 @@ bool shiny_found = false;   // a flag eventually indicating that shiny Celebi (u
 bool error_occured = false; // a flag indicating that somthing went wrong (example: Arduino not found while Python tries to communicate)
 
 // Display functions
+void draw_celebi();
 void show_main_menu();
 void show_status(const char *line_1, const char *line_2);
 
@@ -63,12 +66,17 @@ void setup(void)
   button_a_servo.attach(9);
 
   // prepare LCD display
+  u8g2.begin();
+  u8g2.clearBuffer();
+
+  draw_celebi();
+
   u8x8.begin();
   u8x8.setPowerSave(0);
 
   // prepare communication between Arduino and Python program
   Serial.begin(9600);
-  Serial.setTimeout(1);
+  Serial.setTimeout(200); // seems the bigger the timeout (in Arduino), the lower can be the framerate (in OpenCV)
 }
 
 void loop(void)
@@ -86,13 +94,12 @@ void loop(void)
   delay(300);
 
   if (!shiny_found && !error_occured) {
-    show_main_menu();
     hunt_celebi();
   }
 }
 
-void show_main_menu() { // TODO: use u8g2 lib ?
-  const unsigned char epd_bitmap_celebi_bmp [] U8X8_PROGMEM = { // bitmap celebi picture
+void draw_celebi() {
+  const unsigned char epd_bitmap_celebi_bmp [] U8X8_PROGMEM = { // bitmap celebi picture (maybe should I add text ?)
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
@@ -158,6 +165,13 @@ void show_main_menu() { // TODO: use u8g2 lib ?
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
   };
+
+  u8g2.setDrawColor(1); // White
+  u8g2.drawXBMP(0, 0, 128, 64, epd_bitmap_celebi_bmp);
+  u8g2.sendBuffer();
+
+  delay(3000);
+  u8g2.clearBuffer();
 }
 
 // Indicates wether the program is still hunting Celebi, or has found it
@@ -188,7 +202,7 @@ void click(const char *button) {
     rotation = 136; // must manually set it (depending on how you installed the Servo)
   } else if ("button_a" == button) {
     servo = button_a_servo;
-    rotation = 116; // must manually set it (depending on how you installed the Servo)
+    rotation = 122; // must manually set it (depending on how you installed the Servo)
   } else {
     return ;
   }
