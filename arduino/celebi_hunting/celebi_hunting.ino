@@ -202,7 +202,7 @@ void click(const char *button) {
     rotation = 136; // must manually set it (depending on how you installed the Servo)
   } else if ("button_a" == button) {
     servo = button_a_servo;
-    rotation = 122; // must manually set it (depending on how you installed the Servo)
+    rotation = 124; // must manually set it (depending on how you installed the Servo)
   } else {
     return ;
   }
